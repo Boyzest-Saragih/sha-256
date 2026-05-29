@@ -19,7 +19,7 @@ def Sigma0(x):
     hasil = rightRotate(x,2)^rightRotate(x,13),shiftRight(x,22)
     return hasil
 
-# sigma kecil 0 & 1 digunakan untuk ekspansi pesan untuk menghitung nilai $W_{16}$ hingga $W_{63}$
+# sigma kecil 0 & 1 digunakan untuk ekspansi pesan untuk menghitung nilai W16 hingga W63
 def sigma0(x):
     hasil = rightRotate(x,7)^rightRotate(x,18),shiftRight(x,3)
     return hasil
@@ -29,15 +29,51 @@ def sigma1(x):
     return hasil
 
 
-msg = "abcd"
-msg = charToHex(msg)
-print(type(msg))
+# ch = (e and f) xor ((not e) and g)
+def Ch(x, y, z):
+    return (x & y) ^ (~x & z)
 
-rotateRightHasil = rightRotate(msg,7)
-print(hex(msg))
-print(hex(rotateRightHasil))
-print(hex(shiftRight(msg,7)))
-print(format (rotateRightHasil,'032b'))
-print(format (shiftRight(msg,7),'032b'))
-print(format (msg,'032b'))
+# maj = (a and b) xor (a and c) xor (b and c)
+def Maj(x, y, z):
+    return (x & y) ^ (x & z) ^ (y & z)
+
+
+def pad_message(text_input):
+    msg_bytes = bytearray(text_input, 'utf-8')
+    
+    panjang_asli_bit = len(msg_bytes) * 8
+    
+    msg_bytes.append(0x80)
+    
+
+    while len(msg_bytes) % 64 != 56:
+        msg_bytes.append(0x00)
+        
+
+    panjang_bita = panjang_asli_bit.to_bytes(8, byteorder='big')
+    msg_bytes.extend(panjang_bita)
+    
+    return msg_bytes
+
+
+msg_padded = pad_message("hello world")
+
+W = []
+for i in range(0, len(msg_padded), 4):
+    # Ambil 4 bit sekaligus, gabungkan jadi satu integer 32-bit = 1 W
+    satu_kata = int.from_bytes(msg_padded[i:i+4], byteorder='big')
+    W.append(satu_kata)
+
+print{format(W[15], '032b')}
+# msg = "abcd"
+# msg = charToHex(msg)
+# print(type(msg))
+
+# rotateRightHasil = rightRotate(msg,7)
+# print(hex(msg))
+# print(hex(rotateRightHasil))
+# print(hex(shiftRight(msg,7)))
+# print(format (rotateRightHasil,'032b'))
+# print(format (shiftRight(msg,7),'032b'))
+# print(format (msg,'032b'))
 
