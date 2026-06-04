@@ -60,14 +60,14 @@ def compress_block(W, K, H_awal):
         T1 = (h + Sigma1(e) + Ch(e, f, g) + K[i] + W[i]) & 0xFFFFFFFF
         T2 = (Sigma0(a) + Maj(a, b, c)) & 0xFFFFFFFF
 
-        h = g
-        g = f
-        f = e
-        e = (d + T1) & 0xFFFFFFFF
-        d = c
-        c = b
-        b = a
-        a = (T1 + T2) & 0xFFFFFFFF
+        h=g
+        g=f
+        f=e
+        e=(d + T1) & 0xFFFFFFFF
+        d=c
+        c=b
+        b=a
+        a=(T1 + T2) & 0xFFFFFFFF
 
         # Cetak data khusus untuk Iterasi 0 dan Iterasi 1 sesuai soal
         if i == 0 or i == 1:
