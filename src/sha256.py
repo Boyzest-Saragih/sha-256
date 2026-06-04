@@ -1,39 +1,25 @@
-def charToHex(msg):
-    tmp = msg.encode('utf-8')
-    return int(tmp.hex(),16)
-
 def rightRotate(x, n):
-    hasil = ((x >> n) | (x << (32 - n))) & 0xFFFFFFFF
-    return hasil
+    return ((x >> n) | (x << (32 - n))) & 0xFFFFFFFF
 
-def shiftRight(x,n):
-    hasil = (x>>n)&0xFFFFFFFF
-    return hasil
-
-#Sigma besar 0 dan 1 untuk mengacak variabel kerja a dan e di setiap ronde kompresi.
-def Sigma1(x):
-    hasil = rightRotate(x,6)^rightRotate(x,11),rightRotate(x,25)
-    return hasil
+def shiftRight(x, n):
+    return (x >> n) & 0xFFFFFFFF
 
 def Sigma0(x):
-    hasil = rightRotate(x,2)^rightRotate(x,13),shiftRight(x,22)
-    return hasil
+    return rightRotate(x, 2) ^ rightRotate(x, 13) ^ rightRotate(x, 22)
 
-# sigma kecil 0 & 1 digunakan untuk ekspansi pesan untuk menghitung nilai W16 hingga W63
+def Sigma1(x):
+    return rightRotate(x, 6) ^ rightRotate(x, 11) ^ rightRotate(x, 25)
+
 def sigma0(x):
-    hasil = rightRotate(x,7)^rightRotate(x,18),shiftRight(x,3)
-    return hasil
+    return rightRotate(x, 7) ^ rightRotate(x, 18) ^ shiftRight(x, 3)
 
 def sigma1(x):
-    hasil = rightRotate(x,17)^rightRotate(x,19),shiftRight(x,10)
-    return hasil
+    return rightRotate(x, 17) ^ rightRotate(x, 19) ^ shiftRight(x, 10)
 
-
-# ch = (e and f) xor ((not e) and g)
 def Ch(x, y, z):
-    return (x & y) ^ (~x & z)
+    # Memperbaiki bug signed integer NOT di Python
+    return (x & y) ^ ((~x & 0xFFFFFFFF) & z)
 
-# maj = (a and b) xor (a and c) xor (b and c)
 def Maj(x, y, z):
     return (x & y) ^ (x & z) ^ (y & z)
 
@@ -52,28 +38,53 @@ def pad_message(text_input):
 
     panjang_bita = panjang_asli_bit.to_bytes(8, byteorder='big')
     msg_bytes.extend(panjang_bita)
-    
+
+    print(len(msg_bytes))
     return msg_bytes
 
 
-msg_padded = pad_message("hello world")
+def expand_msg (W0_15):
+    W = list(W0_15)+[0]*48
+    print(len(W))
 
-W = []
-for i in range(0, len(msg_padded), 4):
-    # Ambil 4 bit sekaligus, gabungkan jadi satu integer 32-bit = 1 W
-    satu_kata = int.from_bytes(msg_padded[i:i+4], byteorder='big')
-    W.append(satu_kata)
+    for i in range(16,64):
+        W[i] = (W[i-16] + sigma0(W[i-15]) + W[i-7] + sigma1(W[i-2]) ) & 0xFFFFFFFF
 
-print{format(W[15], '032b')}
-# msg = "abcd"
-# msg = charToHex(msg)
-# print(type(msg))
+    return W
 
-# rotateRightHasil = rightRotate(msg,7)
-# print(hex(msg))
-# print(hex(rotateRightHasil))
-# print(hex(shiftRight(msg,7)))
-# print(format (rotateRightHasil,'032b'))
-# print(format (shiftRight(msg,7),'032b'))
-# print(format (msg,'032b'))
+def compress_block(W, K, H_awal):
+    a, b, c, d, e, f, g, h = H_awal
 
+    for i in range(64):
+        # Hitung Nilai Tambahan T1 dan T2
+        T1 = (h + Sigma1(e) + Ch(e, f, g) + K[i] + W[i]) & 0xFFFFFFFF
+        T2 = (Sigma0(a) + Maj(a, b, c)) & 0xFFFFFFFF
+
+        h = g
+        g = f
+        f = e
+        e = (d + T1) & 0xFFFFFFFF
+        d = c
+        c = b
+        b = a
+        a = (T1 + T2) & 0xFFFFFFFF
+
+        # Cetak data khusus untuk Iterasi 0 dan Iterasi 1 sesuai soal
+        if i == 0 or i == 1:
+            print(f"=== HASIL ITERASI {i} ===")
+            print(f"a: {hex(a)}, b: {hex(b)}, c: {hex(c)}, d: {hex(d)}")
+            print(f"e: {hex(e)}, f: {hex(f)}, g: {hex(g)}, h: {hex(h)}\n")
+
+
+
+    H_akhir = [
+        (H_awal[0] + a) & 0xFFFFFFFF,
+        (H_awal[1] + b) & 0xFFFFFFFF,
+        (H_awal[2] + c) & 0xFFFFFFFF,
+        (H_awal[3] + d) & 0xFFFFFFFF,
+        (H_awal[4] + e) & 0xFFFFFFFF,
+        (H_awal[5] + f) & 0xFFFFFFFF,
+        (H_awal[6] + g) & 0xFFFFFFFF,
+        (H_awal[7] + h) & 0xFFFFFFFF
+    ]
+    return H_akhir
