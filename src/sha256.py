@@ -65,6 +65,7 @@ def expand_msg (W0_15):
     return W
 
 def compress_block(W, K, H_awal):
+    # Menginisialisasi 8 register kerja (working variables) dengan nilai hash blok sebelumnya
     a, b, c, d, e, f, g, h = H_awal
 
     for i in range(64):
@@ -72,6 +73,7 @@ def compress_block(W, K, H_awal):
         T1 = (h + Sigma1(e) + Ch(e, f, g) + K[i] + W[i]) & 0xFFFFFFFF
         T2 = (Sigma0(a) + Maj(a, b, c)) & 0xFFFFFFFF
 
+        # Pergeseran nilai register (register diturunkan ke bawah, kecuali 'e' dan 'a')
         h=g
         g=f
         f=e
